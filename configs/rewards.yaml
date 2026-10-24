@@ -1,0 +1,48 @@
+# Reward presets for GRPO vulnerability detection.
+#
+# Each top-level key is a preset name, selected with `load_reward_config("<name>")`
+# in src/rewards.py (or `--reward <name>` on the command line). A preset has:
+#   description: one line, for humans
+#   format:      parsing options (optional)
+#     require_think: true to also require a non-empty <think>...</think> before
+#                    the answer (default: false, only the <answer> block is checked)
+#   components:  {component name: weight}. The reward for one completion is
+#                sum(weight * component), and every component is 0 or 1:
+#     correct_label  well-formed answer whose label (SAFE / VULNERABLE) is right
+#     wrong_label    well-formed answer whose label is wrong
+#     cwe_match      function is vulnerable, the answer says VULNERABLE, and the
+#                    answered CWE is one of the function's CWEs
+#     bad_format     the answer can't be parsed (it then gets no label credit)
+#
+# Keep the bad_format penalty larger than any wrong_label penalty, or the model
+# learns that emitting garbage is safer than risking a wrong answer.
+
+default:
+  description: +1 correct label, +0.5 matching CWE, -0.5 bad format (the plan's reward).
+  components:
+    correct_label: 1.0
+    cwe_match: 0.5
+    bad_format: -0.5
+
+label_only:
+  description: Detection only, no CWE bonus. Pair with the label_only prompt.
+  components:
+    correct_label: 1.0
+    bad_format: -0.5
+
+penalize_wrong:
+  description: Also punish wrong labels, so constant answers average about 0 on balanced data.
+  components:
+    correct_label: 1.0
+    wrong_label: -1.0
+    cwe_match: 0.5
+    bad_format: -1.5
+
+strict_format:
+  description: Default weights, but a missing or empty <think> block counts as bad format.
+  format:
+    require_think: true
+  components:
+    correct_label: 1.0
+    cwe_match: 0.5
+    bad_format: -0.5
