@@ -1,0 +1,3 @@
+# Prompt/reward code and tests. Training adds torch, transformers, trl, datasets.
+pyyaml
+pytest

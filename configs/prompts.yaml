@@ -1,0 +1,56 @@
+# Prompt variants for GRPO vulnerability detection.
+#
+# Each top-level key is a variant name, selected with `load_prompt("<name>")`
+# in src/prompts.py (or `--prompt <name>` on the command line). A variant has:
+#   description: one line, for humans
+#   system:      system message (optional; leave it out to send only a user message)
+#   user:        user message; must contain the placeholder {code} exactly once,
+#                which is replaced with the C function's source
+#
+# The answer format is parsed by src/rewards.py, so every variant must ask for
+# one of: <answer>SAFE</answer>, <answer>VULNERABLE</answer> or
+# <answer>VULNERABLE: CWE-<number></answer>, as the last thing in the reply.
+
+default:
+  description: Short reasoning in <think>, then a label and, if vulnerable, a CWE.
+  system: You are an expert C security auditor.
+  user: |
+    Decide whether the following C function contains a security vulnerability.
+
+    ```c
+    {code}
+    ```
+
+    First reason briefly (a few sentences) inside <think> </think> tags. Then give
+    your final answer inside <answer> </answer> tags, in exactly one of these forms:
+    <answer>VULNERABLE: CWE-XXX</answer>  (XXX is the number of the most likely CWE)
+    <answer>SAFE</answer>
+
+label_only:
+  description: Short reasoning in <think>, then only the label (no CWE). Pair with the label_only reward.
+  system: You are an expert C security auditor.
+  user: |
+    Decide whether the following C function contains a security vulnerability.
+
+    ```c
+    {code}
+    ```
+
+    First reason briefly (a few sentences) inside <think> </think> tags. Then give
+    your final answer inside <answer> </answer> tags, in exactly one of these forms:
+    <answer>VULNERABLE</answer>
+    <answer>SAFE</answer>
+
+no_reasoning:
+  description: Answer immediately with no reasoning; shortest completions, useful as a baseline.
+  system: You are an expert C security auditor.
+  user: |
+    Decide whether the following C function contains a security vulnerability.
+
+    ```c
+    {code}
+    ```
+
+    Reply with only your answer, in exactly one of these forms:
+    <answer>VULNERABLE: CWE-XXX</answer>  (XXX is the number of the most likely CWE)
+    <answer>SAFE</answer>
