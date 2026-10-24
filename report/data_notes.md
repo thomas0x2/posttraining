@@ -52,3 +52,35 @@ The C data is heavily imbalanced: only about 3% of functions are vulnerable. A
 model that always answers "SAFE" would score about 97% accuracy, so accuracy on
 its own is meaningless here. Training needs a balanced subset (see `plan.md`),
 and evaluation should report precision, recall, F1 and paired accuracy.
+
+## Step 2: balance the train split
+
+Script: `src/balance_primevul_c.py`. It reads
+`data/processed/primevul_c/primevul_train.jsonl` and writes
+`primevul_train_balanced_<pct>.jsonl` next to it (e.g. `_50` for 50/50). The
+input file is left untouched.
+
+Method: random undersampling of the safe class.
+
+- **All vulnerable rows are kept.** They are the scarce class, so we don't throw
+  any away.
+- **Safe rows are sampled down** until vulnerable rows make up `--vuln-frac` of
+  the output (default 0.5 = 1:1; 0.333 gives 1:2). The script refuses ratios
+  that would need more safe rows than exist, since it never oversamples.
+- **Reproducible.** Sampling and the final shuffle both use `--seed` (default
+  0), so the same arguments always produce the same file.
+- **Only train is balanced.** Valid and test keep their real ~2% vulnerable rate
+  so evaluation reflects what the model would see in practice. The paired files
+  are already 1:1 by construction and aren't touched.
+
+### Counts (default: 50/50, seed 0)
+
+| File | Rows | Vulnerable | Safe | % vulnerable |
+|---|---|---|---|---|
+| `primevul_train.jsonl` (before) | 102,564 | 2,993 | 99,571 | 2.9% |
+| `primevul_train_balanced_50.jsonl` (after) | 5,986 | 2,993 | 2,993 | 50.0% |
+
+For reference, `--vuln-frac 0.333` gives 8,988 rows (2,993 vulnerable, 5,995
+safe). Balancing at 1:1 discards about 97% of the safe functions; if training
+needs more variety in safe code, a 1:2 split or resampling the safe rows with a
+different seed per epoch are the obvious next options.
