@@ -1,0 +1,16 @@
+# Datasets: too large for git, download separately (see README)
+data/raw/**
+data/processed/**
+!data/**/
+!data/**/.gitkeep
+
+# Training outputs
+checkpoints/
+wandb/
+outputs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
